@@ -15,21 +15,32 @@ export function FiltersForm({ onSubmit, initialFilters = {} }) {
   // Debounce the search term to avoid excessive API calls
   const debouncedSearch = useDebounce(filters.search, 300)
 
-  // Auto-submit filters when debounced search changes
+  // Auto-submit filters when any filter changes (except search which is handled separately)
   useEffect(() => {
-    // Only auto-submit if search value has changed (not on initial load)
-    if (debouncedSearch !== initialFilters.search) {
-      const filtersWithDebouncedSearch = {
-        ...filters,
-        search: debouncedSearch
-      }
-      onSubmit(filtersWithDebouncedSearch)
+    // Create filters object with current values
+    const currentFilters = {
+      ...filters,
+      search: debouncedSearch
     }
-  }, [debouncedSearch]) // eslint-disable-line react-hooks/exhaustive-deps
+    
+    // Check if any filter has changed from initial values
+    const hasChanged = Object.keys(currentFilters).some(key => 
+      currentFilters[key] !== (initialFilters[key] || '')
+    )
+    
+    // Only submit if there are changes and it's not the initial load
+    if (hasChanged) {
+      onSubmit(currentFilters)
+    }
+  }, [filters.status, filters.department, filters.priority, filters.dateFrom, filters.dateTo, debouncedSearch]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit(filters)
+    const filtersWithDebouncedSearch = {
+      ...filters,
+      search: debouncedSearch
+    }
+    onSubmit(filtersWithDebouncedSearch)
   }
 
   const handleReset = () => {
